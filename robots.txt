@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://utromaya-code.github.io/barinov-tochka-opory-telo-v2/sitemap.xml
