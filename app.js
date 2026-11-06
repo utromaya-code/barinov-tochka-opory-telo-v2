@@ -32,8 +32,60 @@
     link.addEventListener('click', () => {
       const tariff = document.getElementById('tariff');
       if (tariff) tariff.value = link.dataset.tariff;
-      const selected = document.getElementById('selected-tariff');
-      if (selected) { selected.textContent = `Вы выбрали: ${link.dataset.tariff}. Укажите это в сообщении.`; selected.hidden = false; }
     });
   });
+
+  // Заявка: собираем готовое сообщение и открываем Telegram (до подключения GetCourse)
+  const form = document.getElementById('lead-form');
+  if (form) {
+    const params = new URLSearchParams(location.search);
+    ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'].forEach((key) => {
+      if (form.elements[key] && params.get(key)) form.elements[key].value = params.get(key);
+    });
+    const error = document.getElementById('form-error');
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      if (form.elements.website && form.elements.website.value) return;
+      const data = new FormData(form);
+      const name = String(data.get('name') || '').trim();
+      const contact = String(data.get('contact') || '').trim();
+      const tariff = String(data.get('tariff') || '');
+      const problems = [];
+      if (name.length < 2) problems.push('имя');
+      if (contact.length < 3) problems.push('телефон, Telegram или email');
+      if (!tariff) problems.push('формат участия');
+      if (!data.get('consent')) problems.push('согласие на обработку данных');
+      if (problems.length) {
+        error.textContent = `Заполните: ${problems.join(', ')}.`;
+        error.hidden = false;
+        return;
+      }
+      error.hidden = true;
+      const utm = ['utm_source', 'utm_medium', 'utm_campaign'].map((k) => data.get(k)).filter(Boolean).join(' / ');
+      const lines = [
+        'Здравствуйте! Хочу на курс «Точка опоры · Тело» (старт 22 ноября).',
+        `Имя: ${name}`,
+        `Связь: ${contact}`,
+        `Формат: ${tariff}`,
+      ];
+      const message = String(data.get('message') || '').trim();
+      if (message) lines.push(`Вопрос: ${message}`);
+      if (utm) lines.push(`Источник: ${utm}`);
+      track('form_submit', { location: 'apply', tariff });
+      window.location.assign(`https://t.me/vsemaya?text=${encodeURIComponent(lines.join('\n'))}`);
+    });
+  }
+
+  // Закреплённая кнопка на телефоне: после первого экрана, кроме тарифов и заявки
+  const sticky = document.querySelector('.mobile-cta');
+  if (sticky && 'IntersectionObserver' in window) {
+    sticky.hidden = false;
+    const hidden = new Set(['top']);
+    const update = () => sticky.classList.toggle('is-visible', hidden.size === 0);
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => { if (e.isIntersecting) hidden.add(e.target.id); else hidden.delete(e.target.id); });
+      update();
+    });
+    ['top', 'pricing', 'apply'].forEach((id) => { const el = document.getElementById(id); if (el) io.observe(el); });
+  }
 })();

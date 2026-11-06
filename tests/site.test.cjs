@@ -15,11 +15,14 @@ test('all on-page anchors resolve to an id', () => {
 test('current tariff prices and FAQ content are present', () => {
   for (const price of ['24 900', '29 900', '49 900']) assert.ok(html.includes(price));
   assert.ok((html.match(/<details>/g) || []).length >= 5);
-  assert.ok(html.includes('Даты ближайшего потока'));
+  assert.ok(html.includes('22 ноября'));
+  assert.doesNotMatch(html, /по действующей версии сайта|уточните при обращении/);
 });
-test('unconfigured form is hidden and there is an honest fallback', () => {
-  assert.match(html, /<form id="lead-form" method="post" hidden>/);
-  assert.match(html, /Написать в Telegram/);
-  assert.match(html, /id="selected-tariff"/);
+test('form opens Telegram with a ready message and has a direct fallback', () => {
+  assert.match(html, /<form id="lead-form" novalidate>/);
+  assert.match(html, /href="https:\/\/t\.me\/vsemaya"/);
+  assert.match(html, /class="mobile-cta"/);
   assert.doesNotMatch(html, /заявка успешно отправлена/i);
+  const js = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  assert.match(js, /t\.me\/vsemaya\?text=/);
 });
