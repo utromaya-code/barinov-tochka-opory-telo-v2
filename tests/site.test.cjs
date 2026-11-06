@@ -26,3 +26,36 @@ test('form opens Telegram with a ready message and has a direct fallback', () =>
   const js = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   assert.match(js, /t\.me\/vsemaya\?text=/);
 });
+
+
+test('Ilya-approved wording stays intact across redesigns', () => {
+  for (const phrase of [
+    'Уверенность в движении — уверенность в жизни.',
+    'не обязательно самое гибкое.',
+    'качеству движения, а не к достижению условного результата.',
+    'Свобода движения и дыхания:',
+    'Чувство лёгкости:',
+    'Подвижность и сила:',
+    'Улучшение функциональности:',
+    'Создание гармоничного состояния:'
+  ]) {
+    assert.ok(html.includes(phrase), `Missing approved wording: ${phrase}`);
+  }
+  const practices = [
+    ['Грудная клетка', 'Свобода движения и дыхания'],
+    ['Шея', 'Чувство лёгкости'],
+    ['Тазобедренные и ноги', 'Подвижность и сила'],
+    ['Плечи и руки', 'Улучшение функциональности'],
+    ['Всё тело', 'Создание гармоничного состояния']
+  ];
+  for (const [part, title] of practices) {
+    assert.ok(html.includes(`<h3>${part}</h3><p>${title}:`), `Incorrect practice wording: ${part}`);
+  }
+});
+test('recordings of live meetings are not silently promised', () => {
+  assert.ok(html.includes('Возможность просмотра записей трёх живых лабораторий'));
+  assert.ok(html.includes('уточните у организаторов перед оплатой'));
+  assert.ok(html.includes('Чат поддержки с ответами на вопросы'));
+  assert.ok(html.includes('шавасана'));
+  assert.ok(html.includes('гимнастика для глаз'));
+});
